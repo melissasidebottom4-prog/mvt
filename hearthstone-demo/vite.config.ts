@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/mvt/',
+  base: './',
   build: {
     target: 'esnext',
     minify: 'esbuild',
