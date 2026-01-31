@@ -14,6 +14,9 @@
     "rings": "npx tsx examples/hot_ball_rings.ts && npx tsx examples/enzyme_rings.ts",
     "hot-ball-rings": "npx tsx examples/hot_ball_rings.ts",
     "enzyme-rings": "npx tsx examples/enzyme_rings.ts",
+    "spatial": "npx tsx examples/heat_1d.ts && npx tsx examples/genome_1d.ts",
+    "heat": "npx tsx examples/heat_1d.ts",
+    "genome": "npx tsx examples/genome_1d.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
