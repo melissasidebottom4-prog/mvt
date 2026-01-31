@@ -199,7 +199,18 @@ export class ConservationCore {
       this.initialEnergy = E_before;
     }
 
-    // === PHASE 2: Step all rings (isolated) ===
+    // === PHASE 2a: Pass coupling data BEFORE stepping ===
+    // This allows target rings to receive state from source rings
+    for (const coupling of this.couplings) {
+      const source = this.rings.get(coupling.sourceId);
+      const target = this.rings.get(coupling.targetId);
+      if (source && target && target.receiveCouplingData) {
+        // Pass source's serialized state to target
+        target.receiveCouplingData(coupling.sourceId, source.serialize());
+      }
+    }
+
+    // === PHASE 2b: Step all rings (isolated) ===
     for (const ring of this.rings.values()) {
       ring.step(dt, params);
     }

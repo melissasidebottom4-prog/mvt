@@ -1,0 +1,138 @@
+{
+  "timestamp": "2026-01-31T13:04:55.895Z",
+  "test": "reynolds_number_stress_test",
+  "phase": "10_verification",
+  "grid": "32×32×32",
+  "domain": "1mm³",
+  "viscosity": "1e-6 m²/s",
+  "solver_parameters": {
+    "from_solver_10A": {
+      "N": 32,
+      "dx": "3.226e-5 m",
+      "dt_formula": "min(0.5×dx/u_max, 0.25×dx²/ν)"
+    },
+    "from_solver_10B": {
+      "pressure_method": "SOR",
+      "omega": 1.822,
+      "iterations": 50
+    },
+    "from_solver_10C": {
+      "coupling_alpha": 86.9,
+      "nu_pure": "1e-6 m²/s",
+      "nu_C30": "7.74e-7 m²/s",
+      "predicted_change": "-22.6%"
+    }
+  },
+  "results": [
+    {
+      "Re": 10,
+      "amplitude": 0.009999999999999998,
+      "timestep": 0.00026017689999999997,
+      "steps": 2,
+      "pure_water": {
+        "initial_energy": 1.4164932362122555e-11,
+        "final_energy": 1.2924710014979091e-11,
+        "retention_percent": 91.24441744275565,
+        "max_divergence": 0.47422990762644446,
+        "stable": true
+      },
+      "c30_water": {
+        "initial_energy": 1.4164932362122555e-11,
+        "final_energy": 1.3111008537771204e-11,
+        "retention_percent": 92.55962684883993,
+        "max_divergence": 0.3336876805842337,
+        "stable": true
+      },
+      "difference": {
+        "retention_difference_percent": 1.4414135603522333
+      },
+      "pass": true
+    },
+    {
+      "Re": 50,
+      "amplitude": 0.049999999999999996,
+      "timestep": 0.00026017689999999997,
+      "steps": 2,
+      "pure_water": {
+        "initial_energy": 3.5412330905307256e-10,
+        "final_energy": 3.231177503744791e-10,
+        "retention_percent": 91.24441744275393,
+        "max_divergence": 2.3711495381321015,
+        "stable": true
+      },
+      "c30_water": {
+        "initial_energy": 3.5412330905307256e-10,
+        "final_energy": 3.2914297277790127e-10,
+        "retention_percent": 92.94586500336031,
+        "max_divergence": 1.4885400102530753,
+        "stable": true
+      },
+      "difference": {
+        "retention_difference_percent": 1.8647141472231528
+      },
+      "pass": true
+    },
+    {
+      "Re": 100,
+      "amplitude": 0.09999999999999999,
+      "timestep": 0.00016130000000000002,
+      "steps": 4,
+      "pure_water": {
+        "initial_energy": 1.4164932362122902e-9,
+        "final_energy": 1.2690404689237067e-9,
+        "retention_percent": 89.59029499619264,
+        "max_divergence": 8.690150761775726,
+        "stable": true
+      },
+      "c30_water": {
+        "initial_energy": 1.4164932362122902e-9,
+        "final_energy": 1.3020657365624476e-9,
+        "retention_percent": 91.92177578229584,
+        "max_divergence": 5.228889756607487,
+        "stable": true
+      },
+      "difference": {
+        "retention_difference_percent": 2.602380967941094
+      },
+      "pass": true
+    },
+    {
+      "Re": 200,
+      "amplitude": 0.19999999999999998,
+      "timestep": 0.00008065000000000001,
+      "steps": 7,
+      "pure_water": {
+        "initial_energy": 5.665972944849161e-9,
+        "final_energy": 5.1467075283985695e-9,
+        "retention_percent": 90.83537070323206,
+        "max_divergence": 14.630683400044973,
+        "stable": true
+      },
+      "c30_water": {
+        "initial_energy": 5.665972944849161e-9,
+        "final_energy": 5.254929887616159e-9,
+        "retention_percent": 92.74541087234321,
+        "max_divergence": 9.242677216793709,
+        "stable": true
+      },
+      "difference": {
+        "retention_difference_percent": 2.1027493522885945
+      },
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total_tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "all_pass": true,
+    "stable_range": [
+      10,
+      50,
+      100,
+      200
+    ],
+    "unstable_range": [],
+    "ready_for_phase_11": true
+  }
+}

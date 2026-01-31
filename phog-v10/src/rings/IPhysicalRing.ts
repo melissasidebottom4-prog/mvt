@@ -106,6 +106,12 @@ export interface IPhysicalRing {
   getCouplingTo(targetId: string): CouplingData | null;
 
   /**
+   * Receive coupling data from another ring
+   * Optional - rings can implement to receive state from sources
+   */
+  receiveCouplingData?(sourceRing: string, data: Record<string, number>): void;
+
+  /**
    * Reset to initial state
    */
   reset(): void;

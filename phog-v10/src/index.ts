@@ -11,11 +11,23 @@ export * from './receipt.js';
 export { PHYSICS_INDEX, getAllLaws, getLawById, getLawsByCategory } from './physics-index.js';
 
 // Phase 2: Time-stepping with conservation
-export * from './conservation.js';
+export {
+  computeConserved,
+  checkConservation,
+  computeEnergy,
+  computeMomentum,
+  computeMass,
+  computeEntropy,
+  ConservationErrors,
+  formatConservation,
+  computeMultiDomainConservation,
+  verifyMultiDomainConservation,
+  formatMultiDomainConservation
+} from './conservation.js';
 export * from './integrators.js';
 export * from './simulator.js';
 
-// Phase 3: Multi-physics coupling
+// Phase 3: Multi-physics coupling (ConservedQuantities comes from here)
 export * from './types.js';
 export * from './entropyTracker.js';
 export * from './solvers/index.js';

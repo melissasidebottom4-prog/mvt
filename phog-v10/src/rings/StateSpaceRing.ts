@@ -181,12 +181,14 @@ export class StateSpaceRing extends PhysicalRingBase {
    * Apply thermal decoherence
    *
    * Memory decays at rate ∝ kB·T (faster at higher temperature)
-   * Decay rate is scaled to be observable in picosecond timescales
+   * Decay rate scaled for millisecond-scale fluid simulations:
+   *   ~10% decay per millisecond at room temperature
    */
   private applyDecoherence(dt: number): void {
     // Decoherence rate: γ = kB·T / ℏ (natural unit)
-    // Scaled to show ~50% decay over simulation for mid-temperature
-    const gamma = (this.kB * this.temperature / this.hbar) * dt * 1e-6;
+    // Scaled so decay is observable but doesn't wipe out memory instantly
+    // At T=298K, dt=1e-4s: gamma ≈ 0.04 → ~4% decay per step
+    const gamma = (this.kB * this.temperature / this.hbar) * dt * 1e-12;
 
     for (let i = 0; i < 5; i++) {
       for (let j = i + 1; j < 5; j++) {
