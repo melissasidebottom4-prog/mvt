@@ -30,6 +30,9 @@
     "em": "npx tsx examples/light_pulse.ts && npx tsx examples/dna_biophoton.ts",
     "light-pulse": "npx tsx examples/light_pulse.ts",
     "biophoton": "npx tsx examples/dna_biophoton.ts",
+    "solver11a-dna": "npx tsx examples/solver11a_dna_equilibration.ts",
+    "solver11a-em": "npx tsx examples/solver11a_em_equilibration.ts",
+    "solver11a-summary": "npx tsx examples/solver11a_summary.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
