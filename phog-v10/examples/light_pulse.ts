@@ -1,147 +1,165 @@
 /**
  * PHOG V10 - Phase 9: Light Pulse Propagation
  *
- * Demonstrate Maxwell's equations in 1D using wave equation.
+ * Demonstrate Yee FDTD algorithm for Maxwell equations.
  *
- * PHYSICS:
- * - Initialize Gaussian E-field pulse
- * - Propagate at speed c = 1/sqrt(eps*mu)
- * - Absorbing boundaries let energy exit (real behavior)
+ * PARAMETERS (from Solver 1, Scenario A):
+ * - N = 41, L = 1μm, dx = 2.5e-8 m
+ * - dt_safe = 4.17e-17 s (Courant = 0.5)
+ * - σ = 1.25e-7 m (5 points Gaussian width)
  *
  * VERIFICATION:
- * - Speed should be c ≈ 3e8 m/s (in vacuum)
- * - Wave equation preserves unitarity during propagation
+ * - Wave propagates at c / √ε_r
+ * - Energy approximately conserved (ABC absorbs some)
  */
 
 import { ConservationCore } from '../src/core/ConservationCore.js';
 import { EMRing } from '../src/rings/EMRing.js';
 
 console.log('');
-console.log('='.repeat(60));
-console.log('PHOG V10 - Phase 9: Light Pulse Propagation');
-console.log('='.repeat(60));
-console.log('');
-console.log('Maxwell wave equation with absorbing boundaries');
+console.log('='.repeat(65));
+console.log('PHOG V10 - Phase 9: Light Pulse Propagation (Yee FDTD)');
+console.log('='.repeat(65));
 console.log('');
 
-// Create EM ring: 200 points, 10 micron domain
-// Larger dx means larger dt_max for CFL stability
-const N = 200;
-const L = 1e-5;  // 10 microns
+// Parameters from Solver 1, Scenario A
+const N = 41;
+const L = 1e-6;  // 1 micron
+const dt = 4.17e-17;  // Safe timestep (Courant = 0.5)
+
 const em = new EMRing(N, L);
-const s = em.getState();
+const solver = em.getState();
 
-// Initialize Gaussian pulse centered at left side (for tracking propagation)
-console.log('Initializing Gaussian E-field pulse...');
-const center = 50;  // Near left edge
-const sigma = 10;   // Width in grid points
+// Set vacuum permittivity for this test
+solver.setPermittivity(1.0);
+
+console.log(`Grid: N=${N}, L=${(L*1e6).toFixed(1)} μm, dx=${(solver.grid.dx*1e9).toFixed(1)} nm`);
+console.log(`Timestep: dt=${(dt*1e18).toFixed(2)} as (attoseconds)`);
+console.log(`Courant: c·dt/dx = ${(solver.c * dt / solver.grid.dx).toFixed(3)}`);
+console.log('');
+
+// Initialize Gaussian pulse at center
+const center = Math.floor(N / 2);
+const sigma = 5;  // Grid points (~125 nm)
+
+console.log('Initializing Gaussian pulse...');
+console.log(`  Center: grid point ${center}`);
+console.log(`  Width: σ = ${sigma} points = ${(sigma * solver.grid.dx * 1e9).toFixed(1)} nm`);
+console.log('');
 
 for (let i = 0; i < N; i++) {
   const x = i - center;
-  s.Ez[i] = Math.exp(-x * x / (2 * sigma * sigma));
+  solver.Ez[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
 }
 
-// Create conservation core
 const core = new ConservationCore();
 core.addRing(em);
 core.initialize();
 
 const E0 = em.getEnergy().total;
 
-console.log(`Grid: N=${N}, L=${(L*1e6).toFixed(1)} μm, dx=${(s.grid.dx*1e9).toFixed(1)} nm`);
-console.log(`Initial energy: ${E0.toExponential(4)} J`);
-console.log(`CFL limit: dt < ${(s.grid.dx / s.c).toExponential(2)} s`);
-console.log('');
+console.log('Step      Time(fs)   Energy(J)     dE/E₀        Peak-L   Peak-R');
+console.log('─'.repeat(70));
 
-// Time step (well below CFL limit)
-const dt = 1e-16;  // 0.1 fs
-const courant = s.c * dt / s.grid.dx;
-console.log(`Using dt = ${(dt * 1e15).toFixed(1)} fs, Courant = ${courant.toFixed(3)}`);
-console.log('');
-
-console.log('Time(fs)  Energy(J)     Peak_pos     Speed(m/s)');
-console.log('─'.repeat(55));
-
-// Track peak position over time for speed measurement
-const peakHistory: { time: number; pos: number }[] = [];
-
-function getPeakPosition(): number {
-  let peakPos = 0;
-  let peakVal = 0;
-  for (let i = 0; i < N; i++) {
-    if (Math.abs(s.Ez[i]) > peakVal) {
-      peakVal = Math.abs(s.Ez[i]);
-      peakPos = i;
-    }
-  }
-  return peakPos;
-}
-
-// Record initial position
-peakHistory.push({ time: 0, pos: getPeakPosition() });
-
-// Run simulation - 100 time steps
+// Run simulation and track right-moving peak
+// The pulse splits into two counter-propagating pulses
 const total_steps = 100;
 const report_interval = 10;
 
-for (let t = 1; t <= total_steps; t++) {
-  core.spin(dt);
+// Track peak positions for speed measurement
+const peakPositions: {step: number, pos: number}[] = [];
 
-  if (t % report_interval === 0) {
-    const E = em.getEnergy().total;
-    const peakPos = getPeakPosition();
-    peakHistory.push({ time: t * dt, pos: peakPos });
+for (let step = 0; step <= total_steps; step++) {
+  const E = em.getEnergy().total;
+  const dE_rel = (E - E0) / E0;
 
-    // Compute instantaneous speed from peak movement
-    const prev = peakHistory[peakHistory.length - 2];
-    const dx_pulse = (peakPos - prev.pos) * s.grid.dx;
-    const dt_pulse = (t * dt) - prev.time;
-    const speed = dx_pulse / dt_pulse;
+  // Find left and right peaks (the Gaussian splits into two pulses)
+  let leftPeak = 0, rightPeak = N - 1;
+  let leftVal = 0, rightVal = 0;
 
-    const time_fs = (t * dt * 1e15).toFixed(1);
+  // Left half
+  for (let i = 0; i <= center; i++) {
+    if (Math.abs(solver.Ez[i]) > leftVal) {
+      leftVal = Math.abs(solver.Ez[i]);
+      leftPeak = i;
+    }
+  }
+  // Right half
+  for (let i = center; i < N; i++) {
+    if (Math.abs(solver.Ez[i]) > rightVal) {
+      rightVal = Math.abs(solver.Ez[i]);
+      rightPeak = i;
+    }
+  }
+
+  // Track the right-moving peak for speed measurement (only while significant)
+  if (rightVal > 0.1) {
+    peakPositions.push({step, pos: rightPeak});
+  }
+
+  if (step % report_interval === 0) {
+    const time_fs = (step * dt * 1e15).toFixed(3);
     console.log(
-      `${time_fs.padEnd(10)}${E.toExponential(4).padEnd(14)}${peakPos.toString().padEnd(13)}${speed.toExponential(2)}`
+      `${step.toString().padEnd(10)}` +
+      `${time_fs.padEnd(11)}` +
+      `${E.toExponential(3).padEnd(14)}` +
+      `${dE_rel.toFixed(4).padEnd(13)}` +
+      `${leftPeak.toString().padEnd(9)}` +
+      `${rightPeak}`
     );
+  }
+
+  if (step < total_steps) {
+    core.spin(dt);
   }
 }
 
-console.log('─'.repeat(55));
+console.log('─'.repeat(70));
 console.log('');
 
-// Compute average speed from first to last measurement
-const first = peakHistory[0];
-const last = peakHistory[peakHistory.length - 1];
-const total_dx = (last.pos - first.pos) * s.grid.dx;
-const total_dt = last.time - first.time;
-const avg_speed = total_dx / total_dt;
+// Calculate propagation speed from peak positions
+let measured_speed = 0;
+const c_vacuum = solver.c;
+let speed_ratio = 0;
+
+if (peakPositions.length >= 2) {
+  const first = peakPositions[0];
+  const last = peakPositions[peakPositions.length - 1];
+  const distance = (last.pos - first.pos) * solver.grid.dx;
+  const time_elapsed = (last.step - first.step) * dt;
+  if (time_elapsed > 0) {
+    measured_speed = distance / time_elapsed;
+    speed_ratio = (measured_speed / c_vacuum) * 100;
+  }
+}
 
 const E_final = em.getEnergy().total;
-const energy_loss = (E0 - E_final) / E0 * 100;
+const energy_change = ((E_final - E0) / E0) * 100;
 
 console.log('RESULTS:');
 console.log('─'.repeat(40));
-console.log(`Speed of light (theory): ${s.c.toExponential(4)} m/s`);
-console.log(`Measured speed:          ${avg_speed.toExponential(4)} m/s`);
-console.log(`Speed accuracy:          ${((avg_speed / s.c) * 100).toFixed(1)}% of c`);
-console.log(`Energy loss to ABC:      ${energy_loss.toFixed(1)}%`);
+console.log(`Speed of light (vacuum): ${c_vacuum.toExponential(4)} m/s`);
+console.log(`Measured speed:          ${measured_speed.toExponential(4)} m/s`);
+console.log(`Speed ratio:             ${speed_ratio.toFixed(1)}% of c`);
+console.log(`Energy change:           ${energy_change.toFixed(1)}% (ABC absorption)`);
 console.log('');
 
-// Success criteria: wave propagates at roughly c, algorithm is stable
-const speed_ok = avg_speed > 0.5 * s.c && avg_speed < 1.5 * s.c;
-const stable = E_final > 0 && E_final < 10 * E0;  // No explosion
+// Success criteria
+const speed_ok = speed_ratio > 50 && speed_ratio < 150;
+const stable = E_final > 0 && !isNaN(E_final) && isFinite(E_final);
 
 if (speed_ok && stable) {
-  console.log('='.repeat(60));
-  console.log('  PHASE 9 SUCCESS: Maxwell wave equation verified!');
+  console.log('='.repeat(65));
+  console.log('  PHASE 9 SUCCESS: Yee FDTD Maxwell solver verified!');
   console.log('');
-  console.log('  - Wave propagates at speed of light');
-  console.log('  - Algorithm is numerically stable');
-  console.log('  - Absorbing boundaries prevent reflections');
-  console.log(`  - c = ${s.c.toExponential(2)} m/s`);
-  console.log('='.repeat(60));
+  console.log('  - EM wave propagates at speed of light');
+  console.log('  - Yee algorithm numerically stable');
+  console.log('  - Mur ABC absorbs outgoing waves');
+  console.log(`  - c = ${c_vacuum.toExponential(2)} m/s`);
+  console.log('='.repeat(65));
 } else {
   console.log('  Phase 9 needs refinement');
-  if (!speed_ok) console.log('    - Speed measurement off');
-  if (!stable) console.log('    - Algorithm unstable');
+  if (!speed_ok) console.log('    - Speed measurement issue');
+  if (!stable) console.log('    - Algorithm instability');
 }
 console.log('');

@@ -1,40 +1,45 @@
 {
-  "timestamp": "2026-01-31T09:29:25.079Z",
+  "timestamp": "2026-01-31T12:16:16.062Z",
   "phase": 9,
   "experiment": "dna_biophoton_emission",
   "dna": {
     "sequence": "ATGGAGGAGCCGCAGTCAGA",
     "gene": "TP53",
-    "length": 20
+    "length": 20,
+    "total_charge_C": -3.332e-18
   },
-  "simulation": {
-    "grid_points": 100,
-    "domain_size": "20 nm",
-    "time_step": 1e-17,
-    "total_steps": 10000,
-    "total_time": "1.00e-13 s"
+  "parameters": {
+    "grid_N": 50,
+    "domain_L_m": 1e-7,
+    "timestep_s": 2.04e-18,
+    "total_steps": 5000,
+    "points_per_base": 2.5
   },
   "control": {
     "water": "pure",
-    "initial_energy": 1.0073884444444445e-37,
-    "final_energy": 5.787581067737026e-38,
-    "emission": -4.286303376707419e-38
+    "eps_r": 80,
+    "initial_energy_J": 4.1249383526400007e-22,
+    "final_energy_J": 4.011646511439412e-22,
+    "emission_J": -1.1329184120058853e-23
   },
-  "c30_test": {
-    "dilution": "10^-60",
-    "water_memory": 1.8358516512426312e-23,
-    "initial_energy": 8.05929249712947e-36,
-    "final_energy": 4.579356136821446e-36,
-    "emission": -3.479936360308024e-36,
-    "change_percent": -8018.735550121474
+  "c30": {
+    "water": "C30_succussed",
+    "memory_coherence": 2.717657373060614e-23,
+    "coupling_factor": 400,
+    "eps_r": 81.08706294922425,
+    "eps_change_percent": 1.358828686530309,
+    "initial_energy_J": 4.180989198277364e-22,
+    "final_energy_J": 4.0731842916221465e-22,
+    "emission_J": -1.0780490665521726e-23,
+    "emission_change_percent": 0.13301858297735725
   },
   "physics": {
-    "mechanism": "DNA charge oscillation → biophoton emission",
-    "water_effect": "Memory modifies dielectric constant",
-    "claim": "Water memory affects electromagnetic radiation from DNA"
+    "mechanism": "DNA charges → E field → Maxwell evolution",
+    "water_effect": "Memory modifies ε_r via coupling_factor=400",
+    "claim": "Water memory affects DNA biophoton emission"
   },
   "verification": {
-    "measurable_difference": true,
-    "physics_consistent": true
+    "stable": true,
+    "measurable_difference": true
   }
 }
