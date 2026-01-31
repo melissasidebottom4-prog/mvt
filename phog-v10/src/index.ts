@@ -14,3 +14,9 @@ export { PHYSICS_INDEX, getAllLaws, getLawById, getLawsByCategory } from './phys
 export * from './conservation.js';
 export * from './integrators.js';
 export * from './simulator.js';
+
+// Phase 3: Multi-physics coupling
+export * from './types.js';
+export * from './entropyTracker.js';
+export * from './solvers/index.js';
+export * from './coupling/index.js';
