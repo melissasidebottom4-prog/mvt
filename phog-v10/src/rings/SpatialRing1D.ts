@@ -273,4 +273,54 @@ export class SpatialRing1D extends PhysicalRingBase {
   setPotential(V: Float64Array): void {
     this.params.potential = V;
   }
+
+  // ============================================================
+  // PHASE 7: Water-Genome Coupling
+  // ============================================================
+
+  /**
+   * Receive coupling data from another ring
+   *
+   * For genome mode, this receives water memory effects:
+   *   - dielectric_factor: Scales DNA base potentials
+   *   - phonon_coupling: Adds to effective potential
+   */
+  receiveCouplingData(sourceRing: string, data: any): void {
+    if (this.mode === 'genome' && this.genomeSolver) {
+      this.genomeSolver.receiveCouplingData(sourceRing, data);
+    }
+    // Heat and wave modes don't currently couple to water
+  }
+
+  /**
+   * Step with water coupling (genome mode only)
+   *
+   * Uses stepWithWaterCoupling which applies:
+   *   V_eff = V_base * dielectric_factor + phonon_coupling
+   */
+  stepWithWaterCoupling(dt: number): number {
+    if (this.mode !== 'genome' || !this.genomeSolver) {
+      return this.step(dt);  // Fallback to regular step
+    }
+
+    const E_before = this.getEnergy().total;
+    const V = this.params.potential || new Float64Array(this.N);
+
+    this.genomeSolver.stepWithWaterCoupling(dt, V);
+
+    return this.getEnergy().total - E_before;
+  }
+
+  /**
+   * Get genome solver's water coupling diagnostics
+   */
+  getWaterCouplingInfo(): { dielectric: number; phonon: number } | null {
+    if (this.mode === 'genome' && this.genomeSolver) {
+      return {
+        dielectric: this.genomeSolver.getDielectricFactor(),
+        phonon: this.genomeSolver.getPhononCoupling()
+      };
+    }
+    return null;
+  }
 }
