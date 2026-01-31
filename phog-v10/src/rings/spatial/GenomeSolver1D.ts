@@ -289,4 +289,76 @@ export class GenomeSolver1D {
     this.V_dielectric_factor = 1.0;
     this.V_phonon_coupling = 0.0;
   }
+
+  /**
+   * Measure electron transport time across DNA
+   *
+   * Initializes electron at 5' end (position 0) and measures time
+   * for probability to reach 3' end (position N-1).
+   *
+   * Water coupling affects transport rate:
+   * - Higher phonon coupling → faster transport
+   * - Different dielectric → modified barriers
+   *
+   * @param V_base - Base potential from DNA sequence
+   * @param dt - Time step (default 1e-17 s for stability)
+   * @param threshold - Probability threshold at end site (default 0.01)
+   * @param max_steps - Maximum simulation steps
+   * @returns Transport time in seconds
+   */
+  measureTransportTime(
+    V_base: Float64Array,
+    dt: number = 0.001,  // Dimensionless time step
+    threshold: number = 0.01,
+    max_steps: number = 10000
+  ): { time: number; final_prob: number; end_prob: number } {
+    const N = this.grid.N;
+
+    // Initialize electron at 5' end (position 0)
+    for (let i = 0; i < N; i++) {
+      this.psi[i] = { re: 0, im: 0 };
+    }
+    // Normalized delta at start
+    const val = 1 / Math.sqrt(this.grid.dx);
+    this.psi[0] = { re: val, im: 0 };
+
+    const end_pos = N - 1;
+    let steps = 0;
+    let end_prob = 0;
+
+    while (steps < max_steps) {
+      this.stepWithWaterCoupling(dt, V_base);
+      steps++;
+
+      // Check probability at 3' end
+      const re = this.psi[end_pos].re;
+      const im = this.psi[end_pos].im;
+      end_prob = (re * re + im * im) * this.grid.dx;
+
+      if (end_prob > threshold) break;
+    }
+
+    return {
+      time: steps * dt,
+      final_prob: this.getProbability(),
+      end_prob: end_prob
+    };
+  }
+
+  /**
+   * Get integrated probability in right half of domain
+   * (measures how much electron has moved toward 3' end)
+   */
+  getRightHalfProbability(): number {
+    const N = this.grid.N;
+    const mid = Math.floor(N / 2);
+    let P = 0;
+
+    for (let i = mid; i < N; i++) {
+      const re = this.psi[i].re;
+      const im = this.psi[i].im;
+      P += (re * re + im * im) * this.grid.dx;
+    }
+    return P;
+  }
 }
