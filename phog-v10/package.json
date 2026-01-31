@@ -27,6 +27,9 @@
     "spatial2d": "npx tsx examples/heat_2d.ts && npx tsx examples/stirred_beaker.ts",
     "heat2d": "npx tsx examples/heat_2d.ts",
     "beaker": "npx tsx examples/stirred_beaker.ts",
+    "em": "npx tsx examples/light_pulse.ts && npx tsx examples/dna_biophoton.ts",
+    "light-pulse": "npx tsx examples/light_pulse.ts",
+    "biophoton": "npx tsx examples/dna_biophoton.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
