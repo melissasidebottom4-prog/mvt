@@ -24,6 +24,9 @@
     "water-genome-control": "npx tsx examples/water_genome_control.ts",
     "water-genome-c30": "npx tsx examples/water_genome_c30.ts",
     "water-genome-temp": "npx tsx examples/water_genome_temperature.ts",
+    "spatial2d": "npx tsx examples/heat_2d.ts && npx tsx examples/stirred_beaker.ts",
+    "heat2d": "npx tsx examples/heat_2d.ts",
+    "beaker": "npx tsx examples/stirred_beaker.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
