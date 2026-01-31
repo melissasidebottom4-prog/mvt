@@ -7,6 +7,7 @@
   "scripts": {
     "start": "npx tsx examples/first_receipt.ts",
     "test": "npx tsx examples/test_all_laws.ts",
+    "simulate": "npx tsx examples/falling_ball.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
