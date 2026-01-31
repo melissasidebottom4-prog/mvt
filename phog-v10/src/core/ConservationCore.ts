@@ -296,4 +296,50 @@ export class ConservationCore {
     this.totalEntropyProduced = 0;
     this.initialEnergy = null;
   }
+
+  // ============================================================
+  // Convenience methods for simpler API
+  // ============================================================
+
+  /**
+   * Add a ring (alias for registerRing)
+   */
+  addRing(ring: IPhysicalRing): void {
+    this.registerRing(ring);
+  }
+
+  /**
+   * Create a simple coupling between two rings
+   * Uses getCouplingTo method on source ring
+   */
+  couple(sourceId: string, targetId: string): void {
+    const source = this.rings.get(sourceId);
+    const target = this.rings.get(targetId);
+
+    if (!source || !target) {
+      // Silently skip if rings not found (for flexible initialization order)
+      return;
+    }
+
+    // Create a simple coupling that uses the ring's getCouplingTo method
+    this.registerCoupling({
+      sourceId,
+      targetId,
+      name: `${sourceId}->${targetId}`,
+      compute: (src, tgt, dt) => {
+        const coupling = src.getCouplingTo(targetId);
+        if (coupling) {
+          return coupling.energyFlux * dt;
+        }
+        return 0;
+      }
+    });
+  }
+
+  /**
+   * Initialize the system (lock initial energy)
+   */
+  initialize(): void {
+    this.initialEnergy = this.getTotalEnergy();
+  }
 }
