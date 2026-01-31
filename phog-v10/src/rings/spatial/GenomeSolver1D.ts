@@ -208,4 +208,85 @@ export class GenomeSolver1D {
     }
     return rho;
   }
+
+  // ============================================================
+  // PHASE 7: Water-Genome Coupling
+  // ============================================================
+
+  /**
+   * Water coupling parameters
+   *
+   * V_dielectric_factor: Scales the DNA potential based on water's
+   *   dielectric constant. Water in different states has different
+   *   permittivity, affecting Coulomb screening.
+   *
+   * V_phonon_coupling: Additional coupling from water memory coherence.
+   *   Non-zero when water has been succussed (imprinted with memory).
+   */
+  private V_dielectric_factor: number = 1.0;
+  private V_phonon_coupling: number = 0.0;
+
+  /**
+   * Receive coupling data from water ring
+   *
+   * The water ring sends:
+   *   - dielectric_factor: 1/√ε_r based on water state probabilities
+   *   - phonon_coupling: memory_coherence * 1e20 * kB * T
+   */
+  receiveCouplingData(sourceRing: string, data: any): void {
+    if (sourceRing === 'state_space') {
+      // Water state modulates DNA potential
+      if (data.dielectric_factor !== undefined) {
+        this.V_dielectric_factor = data.dielectric_factor;
+      }
+      if (data.phonon_coupling !== undefined) {
+        this.V_phonon_coupling = data.phonon_coupling;
+      }
+    }
+  }
+
+  /**
+   * Step with water coupling effects
+   *
+   * The effective potential becomes:
+   *   V_eff = V_base * V_dielectric_factor + V_phonon_coupling
+   *
+   * This models:
+   *   1. Dielectric screening: Water's permittivity affects base potentials
+   *   2. Phonon coupling: Water memory coherence adds to potential
+   */
+  stepWithWaterCoupling(dt: number, V_base: Float64Array): void {
+    const N = this.grid.N;
+
+    // Build effective potential with water coupling
+    const V_eff = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      V_eff[i] = V_base[i] * this.V_dielectric_factor + this.V_phonon_coupling;
+    }
+
+    // Step with effective potential
+    this.step(dt, V_eff, true);
+  }
+
+  /**
+   * Get current dielectric factor (for diagnostics)
+   */
+  getDielectricFactor(): number {
+    return this.V_dielectric_factor;
+  }
+
+  /**
+   * Get current phonon coupling (for diagnostics)
+   */
+  getPhononCoupling(): number {
+    return this.V_phonon_coupling;
+  }
+
+  /**
+   * Reset water coupling to defaults
+   */
+  resetWaterCoupling(): void {
+    this.V_dielectric_factor = 1.0;
+    this.V_phonon_coupling = 0.0;
+  }
 }
