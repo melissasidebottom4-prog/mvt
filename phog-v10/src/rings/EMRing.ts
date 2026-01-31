@@ -1,36 +1,40 @@
 /**
  * PHOG V10 - Phase 9: Electromagnetic Ring
  *
- * Maxwell's equations in 1D using Yee algorithm (FDTD).
+ * Maxwell's equations in 1D using Yee FDTD algorithm.
  *
  * PHYSICS:
  * - Ez, By fields evolve via Maxwell equations
  * - DNA bases create charge density
  * - Water state modifies dielectric constant
  *
- * COUPLING:
- * - Receives water memory from StateSpaceRing
- * - Memory modifies dielectric: eps_r = 80 + memory_contribution
- * - Higher coherence → different EM propagation
+ * COUPLING (from Solver 3):
+ * - Pure water: ε_r = 80.00
+ * - C30 water:  ε_r = 81.04 (+1.3%)
+ * - coupling_factor = 400 maps memory → Δε_r ≈ 1
  */
 
 import {
   PhysicalRingBase,
   EnergyContributions,
-  KinematicState
+  KinematicState,
+  CouplingData
 } from './IPhysicalRing.js';
 import { EMSolver1D } from './em/EMSolver1D.js';
 
 export class EMRing extends PhysicalRingBase {
   readonly id = 'electromagnetic';
-  readonly name = 'EM Ring (Maxwell 1D)';
+  readonly name = 'EM Ring (Maxwell FDTD)';
 
   private solver: EMSolver1D;
-  private initialEnergy: number = 0;
 
   // Water coupling data
   private waterMemory: number = 0;
   private waterState: number[] = [0, 1, 0, 0, 0];  // Default: liquid
+  private eps_r: number = 80.0;  // Current relative permittivity
+
+  // Coupling factor from Solver 3: gives Δε_r ≈ 1 for typical memory
+  private readonly coupling_factor = 400;
 
   constructor(N: number, L: number) {
     super();
@@ -38,7 +42,7 @@ export class EMRing extends PhysicalRingBase {
   }
 
   /**
-   * Step forward using Yee algorithm
+   * Step forward using Yee FDTD algorithm
    */
   step(dt: number, _params?: Record<string, number>): number {
     const E_before = this.solver.getEnergy();
@@ -61,45 +65,39 @@ export class EMRing extends PhysicalRingBase {
   }
 
   /**
-   * Get kinematic state (EM has no mass/momentum in this model)
+   * Get kinematic state
    */
   getKinematicState(): KinematicState {
     return {
       position: 0,
-      velocity: this.solver.c,  // Speed of light
+      velocity: this.solver.getSpeedInMedium(),
       mass: 0
     };
   }
 
   /**
-   * Absorb energy (add to E field)
+   * Absorb energy into E field
    */
   absorbEnergy(amount: number): number {
-    // Distribute energy to E field uniformly
     const N = this.solver.grid.N;
-    const dE_per_cell = amount / (N * this.solver.grid.dx);
-
-    // E field energy: U = 0.5 * eps * E^2
-    // dU = eps * E * dE
-    // If E = 0, need to add field: E = sqrt(2*dU/eps)
     const eps_avg = this.solver.eps[0];
-    const dE = Math.sqrt(2 * Math.abs(dE_per_cell) / eps_avg);
+    const dE = Math.sqrt(2 * Math.abs(amount) / (N * this.solver.grid.dx * eps_avg));
 
     if (amount > 0) {
       for (let i = 0; i < N; i++) {
-        this.solver.Ez[i] += dE * 0.1;  // Small perturbation
+        this.solver.Ez[i] += dE * 0.01;
       }
     }
     return amount;
   }
 
   /**
-   * Get coupling data (EM provides field info to other rings)
+   * Get coupling data for other rings
    */
-  getCouplingTo(targetId: string): { energyFlux: number; entropyFlux: number; sourceRing: string; targetRing: string } | null {
+  getCouplingTo(targetId: string): CouplingData | null {
     if (targetId === 'genome' || targetId === 'spatial') {
       return {
-        energyFlux: this.solver.getPeakE() * 1e-20,  // Small coupling
+        energyFlux: this.solver.getPoyntingFlux(),
         entropyFlux: 0,
         sourceRing: this.id,
         targetRing: targetId
@@ -110,15 +108,22 @@ export class EMRing extends PhysicalRingBase {
 
   /**
    * Receive coupling from water ring
+   *
+   * Uses coupling_factor = 400 from Solver 3:
+   * - Δε_r = memory × 1e20 × coupling_factor
+   * - For memory ≈ 2.6e-23: Δε_r ≈ 1.04
    */
   receiveCouplingData(sourceRing: string, data: any): void {
     if (sourceRing === 'state_space' && data.field_values) {
       this.waterMemory = data.field_values.memory_coherence || 0;
       this.waterState = data.field_values.water_state || [0, 1, 0, 0, 0];
 
-      // Update dielectric based on water state
-      const eps_r = 80 * this.waterState[1] + this.waterMemory * 1e20;
-      this.solver.eps.fill(this.solver.eps0 * Math.max(1, eps_r));
+      // Calculate permittivity change using pre-calculated coupling_factor
+      const delta_eps_r = this.waterMemory * 1e20 * this.coupling_factor;
+      this.eps_r = 80.0 * this.waterState[1] + delta_eps_r;
+
+      // Update solver permittivity
+      this.solver.setPermittivity(Math.max(1, this.eps_r));
     }
   }
 
@@ -129,30 +134,41 @@ export class EMRing extends PhysicalRingBase {
     this.solver.Ez.fill(0);
     this.solver.By.fill(0);
     this.solver.rho.fill(0);
+    this.eps_r = 80.0;
+    this.solver.setPermittivity(80.0);
     this.entropyProduced = 0;
   }
 
   /**
-   * Serialize state
+   * Serialize state for receipts
    */
   serialize(): Record<string, number> {
     return {
       energy: this.solver.getEnergy(),
       peak_E: this.solver.getPeakE(),
       peak_B: this.solver.getPeakB(),
-      water_memory: this.waterMemory
+      eps_r: this.eps_r,
+      water_memory: this.waterMemory,
+      speed_in_medium: this.solver.getSpeedInMedium()
     };
   }
 
   /**
-   * Get internal solver (for direct manipulation in examples)
+   * Get internal solver for direct manipulation
    */
   getState(): EMSolver1D {
     return this.solver;
   }
 
   /**
-   * Alias for step (used in some examples)
+   * Get current relative permittivity
+   */
+  getPermittivity(): number {
+    return this.eps_r;
+  }
+
+  /**
+   * Alias for step
    */
   spin(dt: number): void {
     this.step(dt);
