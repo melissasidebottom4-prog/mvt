@@ -17,6 +17,9 @@
     "spatial": "npx tsx examples/heat_1d.ts && npx tsx examples/genome_1d.ts",
     "heat": "npx tsx examples/heat_1d.ts",
     "genome": "npx tsx examples/genome_1d.ts",
+    "water": "npx tsx examples/water_memory.ts && npx tsx examples/memory_persistence.ts",
+    "water-memory": "npx tsx examples/water_memory.ts",
+    "memory-persistence": "npx tsx examples/memory_persistence.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
