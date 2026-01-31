@@ -11,6 +11,9 @@
     "couple": "npx tsx examples/hot_ball_falling.ts && npx tsx examples/enzyme_reaction.ts",
     "hot-ball": "npx tsx examples/hot_ball_falling.ts",
     "enzyme": "npx tsx examples/enzyme_reaction.ts",
+    "rings": "npx tsx examples/hot_ball_rings.ts && npx tsx examples/enzyme_rings.ts",
+    "hot-ball-rings": "npx tsx examples/hot_ball_rings.ts",
+    "enzyme-rings": "npx tsx examples/enzyme_rings.ts",
     "build": "tsc"
   },
   "keywords": ["physics", "verification", "receipts"],
