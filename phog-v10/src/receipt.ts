@@ -5,6 +5,7 @@
 
 import crypto from 'crypto';
 import type { ExecutionResult, ConstraintResult } from './executor.js';
+import type { ConservationErrors } from './conservation.js';
 
 export interface PhogReceipt {
   phog_version: string;
@@ -18,6 +19,9 @@ export interface PhogReceipt {
   error?: string;
   hash: string;
   prev_hash?: string;
+  // Phase 2: Conservation tracking
+  conservation_errors?: ConservationErrors;
+  conservation_violations?: string[];
 }
 
 export interface ReceiptChain {
