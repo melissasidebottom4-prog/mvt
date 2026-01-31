@@ -1089,11 +1089,6 @@ law gene_expression_rate {
   constraint: dP_dt >= -k_deg * P
 }
 
-law michaelis_menten {
-  v = V_max * S / (K_m + S)
-  constraint: v <= V_max
-}
-
 law hill_equation {
   theta = L^n / (K_d^n + L^n)
   constraint: theta >= 0

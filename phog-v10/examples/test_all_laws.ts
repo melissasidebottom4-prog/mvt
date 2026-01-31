@@ -159,9 +159,9 @@ const testCases: TestCase[] = [
   // Genome Waveform
   {
     category: 'genome_waveform',
-    lawId: 'michaelis_menten',
-    inputs: { V_max: 100, S: 10, K_m: 5 },
-    expectedOutput: 'v ~ 66.67'
+    lawId: 'replication_fork',
+    inputs: {},
+    expectedOutput: 'v_fork = 1000'
   },
 
   // Planetary Physics
