@@ -1,0 +1,26 @@
+{
+  "name": "phog-v11",
+  "version": "11.0.0",
+  "description": "Physics-first Hierarchical Object Graph - Complete Multi-Scale Engine",
+  "type": "module",
+  "scripts": {
+    "test-dimensions": "tsx examples/test_dimensional_analysis.ts",
+    "test-conservation": "tsx examples/test_conservation_audit.ts",
+    "test-bounds": "tsx examples/test_physical_bounds.ts",
+    "test-indexes": "tsx examples/test_spacetime_indexes.ts",
+    "phase6": "tsx examples/phase6_water_memory.ts",
+    "phase7": "tsx examples/phase7_dna_water_coupling.ts",
+    "phase8": "tsx examples/phase8_2d_fluids.ts",
+    "phase9": "tsx examples/phase9_em_fields.ts",
+    "phase10": "tsx examples/phase10_3d_navier_stokes.ts",
+    "phase11": "tsx examples/phase11_grand_synthesis.ts",
+    "schwarzschild": "tsx examples/schwarzschild_test.ts",
+    "time-dilation": "tsx examples/gravitational_time_dilation.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
